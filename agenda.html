@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>ADF Agenda</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --oeteldonk-rood: #FF0000; --oeteldonk-geel: #FFFF00; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #ffffff; padding: 10px; margin: 0; }
+        
+        #agenda-container { max-width: 600px; margin: auto; }
+        
+        .agenda-header { border-bottom: 3px solid #000; margin-bottom: 20px; padding-bottom: 10px; text-align: center; }
+        
+        .event-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 8px; position: relative; border: 1px solid #eee; }
+        .rood { background-color: var(--oeteldonk-rood); color: white; }
+        .wit { background-color: #ffffff; color: black; }
+        .geel { background-color: var(--oeteldonk-geel); color: black; }
+
+        .calendar-icon-container { width: 50px; height: 55px; background: white; border-radius: 8px; overflow: hidden; margin-right: 15px; display: flex; flex-direction: column; flex-shrink: 0; border: 1px solid #ddd; }
+        .cal-top { height: 15px; background: #333; }
+        .cal-number { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: #333; }
+
+        .event-info h3 { margin: 0; font-size: 1.1em; }
+        .event-info p { margin: 2px 0 0 0; font-size: 0.9em; opacity: 0.9; }
+
+        .pdf-fab { position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; border: none; padding: 15px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        @media print { .pdf-fab { display: none; } }
+    </style>
+</head>
+<body>
+
+<div id="agenda-container">
+    <div id="agenda-preview">
+        <div class="agenda-header">
+            <h1>Agenda ADF</h1>
+            <p>Waar is het Alle Daoge Feest?</p>
+        </div>
+        <div id="lijst-items">Laden...</div>
+    </div>
+</div>
+
+<button class="pdf-fab" onclick="downloadPDF()">📥 PDF Versie</button>
+
+<script>
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRgiqLUzv3k8A7HmEADwLu07E4neOwkihtDGcSKUlinXF6hYvgb0vFjqPoLl8FSoMdON5T5ZD_YvY1/pub?gid=0&single=true&output=csv';
+
+window.onload = function() { loadFromSheets(); };
+
+function loadFromSheets() {
+    const antiCacheUrl = csvUrl + "&t=" + new Date().getTime();
+    fetch('https://corsproxy.io/?' + encodeURIComponent(antiCacheUrl))
+        .then(res => res.text())
+        .then(csvText => {
+            const lines = csvText.split(/\r?\n/);
+            let data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const columns = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (columns.length < 2) continue;
+                data.push({
+                    d: columns[0] ? columns[0].replace(/"/g, "").trim() : "",
+                    t: columns[1] ? columns[1].replace(/"/g, "").trim() : "",
+                    l: columns[2] ? columns[2].replace(/"/g, "").trim() : "",
+                    u: columns[3] ? columns[3].replace(/"/g, "").trim() : ""
+                });
+            }
+            render(data);
+        });
+}
+
+function render(data) {
+    const list = document.getElementById('lijst-items');
+    list.innerHTML = "";
+    const styles = ['rood', 'wit', 'geel'];
+    data.forEach((item, i) => {
+        const dagNummer = item.d.match(/\d+/) || ["?"];
+        const card = document.createElement('div');
+        card.className = `event-card ${styles[i % 3]}`;
+        card.innerHTML = `
+            <div class="calendar-icon-container">
+                <div class="cal-top"></div>
+                <div class="cal-number">${dagNummer[0]}</div>
+            </div>
+            <div class="event-info">
+                <h3>${item.t}</h3>
+                <p><strong>Wanneer:</strong> ${item.d} | ${item.u}</p>
+                <p><strong>Locatie:</strong> ${item.l}</p>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+function downloadPDF() {
+    const element = document.getElementById('agenda-preview');
+    const opt = {
+        margin: 10,
+        filename: 'ADF_Agenda.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'px', format: [element.offsetWidth + 20, element.offsetHeight + 40], hotfixes: ['px_scaling'] }
+    };
+    html2pdf().set(opt).from(element).save();
+}
+</script>
+</body>
+</html>
