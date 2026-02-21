@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Oeteldonk Agenda Maker - Live Google Sheets</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --oeteldonk-rood: #FF0000; --oeteldonk-geel: #FFFF00; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; padding: 20px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; display: flex; gap: 30px; }
+        
+        /* Editor zijbalk */
+        .editor { flex: 1; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
+        h2 { margin-top: 0; color: #333; }
+        p.uitleg { font-size: 13px; color: #666; line-height: 1.4; }
+        
+        .btn { width: 100%; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; transition: 0.2s; text-align: center; display: block; text-decoration: none; }
+        .pdf-btn { background: #007bff; color: white; margin-top: 20px; font-size: 16px; }
+        .pdf-btn:hover { background: #0056b3; }
+        .refresh-btn { background: #28a745; color: white; }
+
+        /* Agenda Preview */
+        #agenda-preview { flex: 1.5; background: white; padding: 40px; min-height: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 4px; }
+        .agenda-header { border-bottom: 3px solid #000; margin-bottom: 30px; padding-bottom: 10px; }
+        
+        /* De Kaarten */
+        .event-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 8px; position: relative; page-break-inside: avoid; break-inside: avoid;}
+        .rood { background-color: var(--oeteldonk-rood); color: white; }
+        .wit { background-color: #ffffff; color: black; border: 1px solid #ddd; }
+        .geel { background-color: var(--oeteldonk-geel); color: black; }
+
+        /* Kalender Icoon */
+        .calendar-icon-container { width: 55px; height: 60px; background: white; border-radius: 10px; overflow: hidden; margin-right: 20px; display: flex; flex-direction: column; flex-shrink: 0; border: 1px solid #ddd; }
+        .cal-top { height: 18px; background: #333; }
+        .cal-number { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; color: #333; }
+
+        .event-info h3 { margin: 0; font-size: 1.1em; }
+        .event-info p { margin: 2px 0 0 0; font-size: 0.9em; opacity: 0.9; }
+
+        @media print {
+            .editor { display: none; }
+            body { background: white; padding: 0; }
+            #agenda-preview { box-shadow: none; width: 100%; padding: 0 !important; margin: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="editor">
+        <h2>Agenda Beheer</h2>
+        <p class="uitleg">De data wordt nu live opgehaald uit je Google Sheet. Wijzigingen in de Sheet zijn na een minuutje zichtbaar na het verversen.</p>
+        
+        <button onclick="loadFromSheets()" class="btn refresh-btn">🔄 Ververs Data</button>
+        <button id="btn-pdf" class="btn pdf-btn">📄 Download PDF</button>
+        
+        <hr style="margin: 20px 0;">
+        <a href="https://docs.google.com/spreadsheets/d/1BF5dO_bKmKeXnlx8fGlRfD135N5C7OLeaEEbJEysE7o/edit" target="_blank" class="btn" style="background: #eee; color: #333; font-size: 11px;">Open Google Sheet ↗</a>
+    </div>
+
+    <div id="agenda-preview">
+        <div class="agenda-header">
+            <h1>Agenda ADF</h1>
+            <p>Wil je weten wanneer het Alle Daoge Feest is?<br>
+            Hieronder zie je waar je ons kunt zien en horen.</p>
+        </div>
+        <div id="lijst-items"></div>
+    </div>
+</div>
+
+<script>
+let data = [];
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRgiqLUzv3k8A7HmEADwLu07E4neOwkihtDGcSKUlinXF6hYvgb0vFjqPoLl8FSoMdON5T5ZD_YvY1/pub?gid=0&single=true&output=csv';
+
+// Starten bij laden van de pagina
+window.onload = function() {
+    loadFromSheets();
+};
+
+function loadFromSheets() {
+    console.log("Bezig met ophalen van de allernieuwste data...");
+    
+    // We voegen een uniek nummer (tijdstempel) toe aan de URL om caching te voorkomen
+    const antiCacheUrl = csvUrl + "&t=" + new Date().getTime();
+    
+    fetch('https://corsproxy.io/?' + encodeURIComponent(antiCacheUrl))
+        .then(res => res.text())
+        .then(csvText => {
+            const lines = csvText.split(/\r?\n/);
+            data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                data.push({
+                    d: columns[0] ? columns[0].replace(/"/g, "").trim() : "", 
+                    t: columns[1] ? columns[1].replace(/"/g, "").trim() : "", 
+                    l: columns[2] ? columns[2].replace(/"/g, "").trim() : "", 
+                    u: columns[3] ? columns[3].replace(/"/g, "").trim() : "", 
+                });
+            }
+            render();
+            console.log("Data ververst op: " + new Date().toLocaleTimeString());
+        })
+        .catch(err => {
+            console.error("Fout:", err);
+            alert("Laden mislukt.");
+        });
+}
+
+function render() {
+    const list = document.getElementById('lijst-items');
+    if (!list) return;
+    
+    list.innerHTML = "";
+    const styles = ['rood', 'wit', 'geel'];
+
+    data.forEach((item, i) => {
+        // Probeer het getal uit de datum te vissen voor het icoontje
+        const dagNummer = item.d.match(/\d+/) || ["?"];
+        
+        const card = document.createElement('div');
+        card.className = `event-card ${styles[i % 3]}`;
+        card.innerHTML = `
+            <div class="calendar-icon-container">
+                <div class="cal-top"></div>
+                <div class="cal-number">${dagNummer[0]}</div>
+            </div>
+            <div class="event-info">
+                <h3>${item.d} : ${item.t}</h3>
+                <p><strong>Waar:</strong> ${item.l}</p>
+                <p><strong>Hoelaat:</strong> ${item.d} | ${item.u}</p>
+                
+            </div>
+        `;
+        list.appendChild(card);
+    });
+    console.log("Agenda getekend met " + data.length + " items.");
+}
+
+function downloadPDF() {
+    const element = document.getElementById('agenda-preview');
+    // We forceren hier een breedte (bijv. 800px) voor een consistenter resultaat
+    const breedte = 800;
+    const opt = {
+        margin: 10,
+        filename: 'ADF_Agenda.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF: { 
+            unit: 'px', 
+            format: [breedte, element.offsetHeight + 40], 
+            orientation: 'portrait',
+            hotfixes: ['px_scaling'] 
+        },
+        pagebreak: { mode: 'avoid' } 
+    };
+
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+        const totalPages = pdf.internal.getNumberOfPages();
+        if (totalPages > 1) { pdf.deletePage(totalPages); }
+    }).save();
+}
+
+// Koppelen aan de PDF knop
+document.getElementById('btn-pdf').addEventListener('click', downloadPDF);
+</script>
+
+</body>
+</html>
