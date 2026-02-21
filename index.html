@@ -35,14 +35,13 @@
     <div id="agenda-preview">
         <div class="agenda-header">
             <h1>Agenda ADF</h1>
-            <p>Wil je wetem waar het Alle Daoge Feest is?</p>
-            <p>Hieronder zie je waar je ons kunt zien en horen.</p>
+            <p>Waar is het Alle Daoge Feest?</p>
         </div>
         <div id="lijst-items">Laden...</div>
     </div>
 </div>
 
-<!--<button class="pdf-fab" onclick="downloadPDF()">📥 PDF Versie</button>-->
+<button class="pdf-fab" onclick="downloadPDF()">📥 PDF Versie</button>
 
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRgiqLUzv3k8A7HmEADwLu07E4neOwkihtDGcSKUlinXF6hYvgb0vFjqPoLl8FSoMdON5T5ZD_YvY1/pub?gid=0&single=true&output=csv';
@@ -84,10 +83,9 @@ function render(data) {
                 <div class="cal-number">${dagNummer[0]}</div>
             </div>
             <div class="event-info">
-                <h3>${item.d} : ${item.t}</h3>
-                <p><strong>Waar:</strong> ${item.l}</p>
-                <p><strong>Hoelaat:</strong> ${item.d} | ${item.u}/p>
-                
+                <h3>${item.t}</h3>
+                <p><strong>Wanneer:</strong> ${item.d} | ${item.u}</p>
+                <p><strong>Locatie:</strong> ${item.l}</p>
             </div>
         `;
         list.appendChild(card);
