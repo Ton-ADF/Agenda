@@ -66,11 +66,11 @@ function loadFromSheets() {
                     u: columns[3] ? columns[3].replace(/"/g, "").trim() : ""
                 });
             }
-            render(data);
+            render();
         });
 }
 
-function render(data) {
+function render() {
     const list = document.getElementById('lijst-items');
     if (!list) return;
     
