@@ -35,7 +35,8 @@
     <div id="agenda-preview">
         <div class="agenda-header">
             <h1>Agenda ADF</h1>
-            <p>Waar is het Alle Daoge Feest?</p>
+            <p>Wil je weten wanneer het Alle Daoge Feest is?</p>
+            <p>Hieronder kun je lezen waar je ons kunt horen en zien.</p>
         </div>
         <div id="lijst-items">Laden...</div>
     </div>
@@ -83,9 +84,9 @@ function render(data) {
                 <div class="cal-number">${dagNummer[0]}</div>
             </div>
             <div class="event-info">
-                <h3>${item.t}</h3>
-                <p><strong>Wanneer:</strong> ${item.d} | ${item.u}</p>
-                <p><strong>Locatie:</strong> ${item.l}</p>
+                <h3>${item.d} : ${item.t}</h3>
+                <p><strong>Waar:</strong> ${item.l}</p>
+                <p><strong>Hoelaat:</strong> ${item.u}</p>
             </div>
         `;
         list.appendChild(card);
