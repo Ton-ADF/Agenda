@@ -35,14 +35,14 @@
     <div id="agenda-preview">
         <div class="agenda-header">
             <h1>Agenda ADF</h1>
-            <p>Wil je weten wanneer het Alle Daoge Feest is?<br>
-            Hieronder zie je waar je ons kunt zien en horen.</p>
+            <p>Wil je wetem waar het Alle Daoge Feest is?</p>
+            <p>Hieronder zie je waar je ons kunt zien en horen.</p>
         </div>
         <div id="lijst-items">Laden...</div>
     </div>
 </div>
 
-<button class="pdf-fab" onclick="downloadPDF()">📥 PDF Versie</button>
+<!--<button class="pdf-fab" onclick="downloadPDF()">📥 PDF Versie</button>-->
 
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRgiqLUzv3k8A7HmEADwLu07E4neOwkihtDGcSKUlinXF6hYvgb0vFjqPoLl8FSoMdON5T5ZD_YvY1/pub?gid=0&single=true&output=csv';
@@ -66,21 +66,16 @@ function loadFromSheets() {
                     u: columns[3] ? columns[3].replace(/"/g, "").trim() : ""
                 });
             }
-            render();
+            render(data);
         });
 }
 
-function render() {
+function render(data) {
     const list = document.getElementById('lijst-items');
-    if (!list) return;
-    
     list.innerHTML = "";
     const styles = ['rood', 'wit', 'geel'];
-
     data.forEach((item, i) => {
-        // Probeer het getal uit de datum te vissen voor het icoontje
         const dagNummer = item.d.match(/\d+/) || ["?"];
-        
         const card = document.createElement('div');
         card.className = `event-card ${styles[i % 3]}`;
         card.innerHTML = `
@@ -91,13 +86,12 @@ function render() {
             <div class="event-info">
                 <h3>${item.d} : ${item.t}</h3>
                 <p><strong>Waar:</strong> ${item.l}</p>
-                <p><strong>Hoelaat:</strong> ${item.d} | ${item.u}</p>
+                <p><strong>Hoelaat:</strong> ${item.d} | ${item.u}/p>
                 
             </div>
         `;
         list.appendChild(card);
     });
-    console.log("Agenda getekend met " + data.length + " items.");
 }
 
 function downloadPDF() {
