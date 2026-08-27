@@ -87,7 +87,7 @@ function loadFromSheets() {
     // We voegen een uniek nummer (tijdstempel) toe aan de URL om caching te voorkomen
     const antiCacheUrl = csvUrl + "&t=" + new Date().getTime();
     
-    fetch(antiCacheUrl)
+    fetch('https://corsproxy.io/?' + encodeURIComponent(antiCacheUrl))
         .then(res => res.text())
         .then(csvText => {
             const lines = csvText.split(/\r?\n/);
