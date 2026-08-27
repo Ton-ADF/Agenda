@@ -51,7 +51,7 @@ window.onload = function() { loadFromSheets(); };
 
 function loadFromSheets() {
     const antiCacheUrl = csvUrl + "&t=" + new Date().getTime();
-    fetch('https://corsproxy.io/?' + encodeURIComponent(antiCacheUrl))
+    fetch(antiCacheUrl)
         .then(res => res.text())
         .then(csvText => {
             const lines = csvText.split(/\r?\n/);
